@@ -37,10 +37,10 @@ choco install -y netfx-4.5.2-devpack
 Please make sure you restart before installing a runner. Chocolatey mentions to run `refreshenv` but neglects to inform you it won't work as expected in Powershell.
 
 There are some old timey Visual Studio files we have to manually place on the server. See the
-`resources/VisualStudioTargets/WebApplication` directory and copy its contents to the server at:
+`Web` and `WebApplication` directories in this repo at `resources/VisualStudioTargets/` and copy the folders to the server at:
 
 ```
-C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Microsoft\VisualStudio\v16.0\WebApplications\
+C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Microsoft\VisualStudio\v16.0\
 ```
 
 _NOTE: You will need to do the above for each version of msbuild you have on the server. Be mindful of the `v16.0` which changes per msbuild version!_
