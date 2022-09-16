@@ -6,7 +6,7 @@ _Note: This is an ongoing experiment into making this as repeatable as possible.
 
 All this setup stuff should be performed in Powershell as an Administrator
 
-```
+```powershell
 Set-ExecutionPolicy RemoteSigned
 
 # Install Chocolatey
@@ -47,7 +47,7 @@ _NOTE: You will need to do the above for each version of msbuild you have on the
 
 It is best to make an alias for build/test tools with version intact, so this should be run in the same scope as the build runner:
 
-```
+```powershell
 Set-Alias -Scope Global -Name msbuild2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\msbuild.exe"
 Set-Alias -Scope Global -Name vstest2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"
 ```
