@@ -4,6 +4,12 @@
 
 _Note: This is an ongoing experiment into making this as repeatable as possible. Yes, I know that Powershell DSC (Desired State Configuration) exists and is awesome, but I was too inexperienced at the time and so reverted back to the old fashioned way. Here are my notes:_
 
+### Visual Studio Project/Solution Prerequisites
+
+If any projects are targeting .Net Framework 4.5, you'll need to upgrade them to reference 4.5.2. See commit af44b10a6aba7c20848d2d47c24b63c4394c0ed3. I have been [led to believe](https://developercommunity.visualstudio.com/t/the-reference-assemblies-for-netframeworkversionv4-1/1660771) that the 4.5 target simply isn't a thing that can be supported, and that we must upgrade to 4.5.2. We'll see what happens when we actually try to run the applications.
+
+### Build Server Setup
+
 All this setup stuff should be performed in Powershell as an Administrator
 
 ```powershell
