@@ -28,6 +28,9 @@ choco install -y git-lfs.install
 choco install -y openjdk11
 choco install -y dotnetfx --pre
 
+# Used to ease installation of build agent runner as Windows Service
+choco install -y nssm
+
 # Needed for WWW Builds
 choco install -y nvs
 choco install -y nuget.commandline
@@ -51,11 +54,39 @@ C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Microsoft
 
 _NOTE: You will need to do the above for each version of msbuild you have on the server. Be mindful of the `v16.0` which changes per msbuild version!_
 
-It is best to make an alias for build/test tools with version intact, so this should be run in the same scope as the build runner:
+It is best to make an alias for build/test tools with version intact, so let's maintain a file at `$PSHOME\profile.ps1` with the following contents (add more to this as needed):
 
 ```powershell
+# These aliases will be available to any job. Add more as needed.
 Set-Alias -Scope Global -Name msbuild2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\msbuild.exe"
 Set-Alias -Scope Global -Name vstest2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"
+```
+
+When you create a new Runner in Bitbucket, you get some copy/paste Powershell commands asking you to download the runner zip and another command for starting it up. Do all but the last command, and make sure the root of the build directory, unzipped, lives here:
+
+    C:\build-runner\atlassian-bitbucket-pipelines-runner
+
+We want to create a Windows Service to run this thing, so let's put the entry point inside `C:\build-runner\www-build-runner-entrypoint.ps1`. Use the following for the contents of that file, replacing that last commented-out section with the `.\start.ps1 ...` string that Bitbucket gave you:
+
+
+```powershell
+cd C:\build-runner\atlassian-bitbucket-pipelines-runner\bin
+
+# TODO: This is where you paste the start.ps1 command from the Bitbucket UI (the one that starts with .\start.ps1 and contains all the runner command line parameters)
+```
+
+And now we can install that as a Windows Service and start it up.
+
+```powershell
+nssm install WwwBitbucketPipelinesRunner (Get-Command powershell).Source
+nssm set WwwBitbucketPipelinesRunner AppParameters C:\build-runner\www-build-runner-entrypoint.ps1
+nssm set WwwBitbucketPipelinesRunner DisplayName "WWW Bitbucket Pipelines Runner"
+nssm set WwwBitbucketPipelinesRunner Description "Windows runner for Bitbucket Pipelines (Used for Wolverine World Wide builds)"
+nssm set WwwBitbucketPipelinesRunner Start SERVICE_DELAYED_AUTO_START
+nssm set WwwBitbucketPipelinesRunner AppExit Default Restart
+nssm set WwwBitbucketPipelinesRunner AppRestartDelay 0
+nssm start WwwBitbucketPipelinesRunner
+
 ```
 
 Now you can set up the build runner in the Bitbucket admin. The lousy instructions are for testing in the current console. In reality, we'll eventually use NSSM to set it up as a server. _TODO: Chad to provide more info_
