@@ -60,6 +60,25 @@ It is best to make an alias for build/test tools with version intact, so let's m
 # These aliases will be available to any job. Add more as needed.
 Set-Alias -Scope Global -Name msbuild2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\msbuild.exe"
 Set-Alias -Scope Global -Name vstest2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"
+
+$env:NUGET_PACKAGES="C:\build-runner\nuget-package-cache"
+```
+
+Some of these Wolverine projects require some legacy nuget packages from old CQL days. These projects are more or less abandoned, so we are including the compiled nuget packages directly on the server.
+
+1. Copy the folders underneath `./resources/NugetLegacyCqlPackages/` and put them on the server at `C:\build-runner\nuget-legacy-cql-packages\`.
+2. Take the following XML and include it in the file `C:\build-runner\nuget.config` (this nuget.config file will be incorporated into each job because nuget searches up the directory tree for these files)
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <config>
+        <add key="legacyCQLPackages" value="C:\build-runner\nuget-legacy-cql-packages" />
+    </config>
+    <packageRestore>
+        <add key="enabled" value="True" />
+    </packageRestore>
+</configuration>
 ```
 
 When you create a new Runner in Bitbucket, you get some copy/paste Powershell commands asking you to download the runner zip and another command for starting it up. Do all but the last command, and make sure the root of the build directory, unzipped, lives here:
