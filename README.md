@@ -37,6 +37,7 @@ choco install -y nuget.commandline
 choco install -y visualstudio2019buildtools
 choco install -y visualstudio2019testagent
 choco install -y netfx-4.6.2-devpack
+choco install -y webdeploy
 
 # HOLD UP: This 4.5.2 version will pop open a license screen.
 # If you're sure you got past the license screen and still the agent isn't recognizing the 4.5.2 dev pack, maybe try installing from https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net452-developer-pack-offline-installer
