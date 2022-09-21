@@ -61,25 +61,11 @@ It is best to make an alias for build/test tools with version intact, so let's m
 Set-Alias -Scope Global -Name msbuild2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\msbuild.exe"
 Set-Alias -Scope Global -Name vstest2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"
 
+# Explicitly set the nuget package cache when running as LocalSystem account because sometimes it gets confused between 32 and 64 bit environments
 $env:NUGET_PACKAGES="C:\build-runner\nuget-package-cache"
 ```
 
-Some of these Wolverine projects require some legacy nuget packages from old CQL days. These projects are more or less abandoned, so we are including the compiled nuget packages directly on the server.
-
-1. Copy the folders underneath `./resources/NugetLegacyCqlPackages/` and put them on the server at `C:\build-runner\nuget-legacy-cql-packages\`.
-2. Take the following XML and include it in the file `C:\build-runner\nuget.config` (this nuget.config file will be incorporated into each job because nuget searches up the directory tree for these files)
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-    <config>
-        <add key="legacyCQLPackages" value="C:\build-runner\nuget-legacy-cql-packages" />
-    </config>
-    <packageRestore>
-        <add key="enabled" value="True" />
-    </packageRestore>
-</configuration>
-```
+Some of these Wolverine projects require some legacy nuget packages from old CQL days. These projects are more or less abandoned, so we are including the compiled nuget packages directly in whatever projects need them, moving forward. Basically, I have omitted `nuget.cqlcorp.local` on the temp build server via the hosts file (this is while testing at CQL; you don't need to do this if you're working on a permanent Azure server), and then run the build, find out what `Cql*` packages it fails to find, then pull them down from within CQL's VPN so and put them in `legacy-cql-nuget-packages` folder in the root of the repository, and change/add the `nuget.cqlcorp.local` reference in the repo's root `NuGet.config` file to point to `./legacy-cql-nuget-packages` (under `/configuration/packageSoures`).
 
 When you create a new Runner in Bitbucket, you get some copy/paste Powershell commands asking you to download the runner zip and another command for starting it up. Do all but the last command, and make sure the root of the build directory, unzipped, lives here:
 
