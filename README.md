@@ -8,6 +8,10 @@ _Note: This is an ongoing experiment into making this as repeatable as possible.
 
 If any projects are targeting .Net Framework 4.5, you'll need to upgrade them to reference 4.5.2. See commit af44b10a6aba7c20848d2d47c24b63c4394c0ed3. I have been [led to believe](https://developercommunity.visualstudio.com/t/the-reference-assemblies-for-netframeworkversionv4-1/1660771) that the 4.5 target simply isn't a thing that can be supported, and that we must upgrade to 4.5.2. We'll see what happens when we actually try to run the applications.
 
+### Nuget Prerequisites
+
+Some of these Wolverine projects require some legacy nuget packages from old CQL days. These projects are more or less abandoned, so we are including the compiled nuget packages directly in whatever projects need them, moving forward. Basically, I have omitted `nuget.cqlcorp.local` on the temp build server via the hosts file (this is while testing at CQL; you don't need to do this if you're working on a permanent Azure server), and then run the build, find out what `Cql*` packages it fails to find, then pull them down from within CQL's VPN so and put them in `legacy-cql-nuget-packages` folder in the root of the repository, and change/add the `nuget.cqlcorp.local` reference in the repo's root `NuGet.config` file to point to `./legacy-cql-nuget-packages` (under `/configuration/packageSoures`).
+
 ### Build Server Setup
 
 All this setup stuff should be performed in Powershell as an Administrator
@@ -18,15 +22,15 @@ Set-ExecutionPolicy RemoteSigned
 # Install Chocolatey
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-# You may have to force long path enabling here (I did, on my windows sandbox; haven't tried yet on the temp server)
-New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
-git config --system core.longpaths true
-
 # Prerequisites for Windows Runners
 choco install -y git
 choco install -y git-lfs.install
 choco install -y openjdk11
 choco install -y dotnetfx --pre
+
+# Some nuget (old nuget.exe) things were still failing until we forced the LongPathsEnabled registry setting, so yes, we still need to do this
+New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+git config --system core.longpaths true
 
 # Used to ease installation of build agent runner as Windows Service
 choco install -y nssm
@@ -36,12 +40,11 @@ choco install -y nvs
 choco install -y nuget.commandline
 choco install -y visualstudio2019buildtools
 choco install -y visualstudio2019testagent
+choco install -y netfx-4.5.1-devpack
+choco install -y netfx-4.5.2-devpack
+choco install -y netfx-4.6.1-devpack
 choco install -y netfx-4.6.2-devpack
 choco install -y webdeploy
-
-# HOLD UP: This 4.5.2 version will pop open a license screen.
-# If you're sure you got past the license screen and still the agent isn't recognizing the 4.5.2 dev pack, maybe try installing from https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net452-developer-pack-offline-installer
-choco install -y netfx-4.5.2-devpack
 ```
 
 Please make sure you restart before installing a runner. Chocolatey mentions to run `refreshenv` but neglects to inform you it won't work as expected in Powershell.
@@ -65,8 +68,7 @@ Set-Alias -Scope Global -Name vstest2019 -Value "C:\Program Files (x86)\Microsof
 # Explicitly set the nuget package cache when running as LocalSystem account because sometimes it gets confused between 32 and 64 bit environments
 $env:NUGET_PACKAGES="C:\build-runner\nuget-package-cache"
 ```
-
-Some of these Wolverine projects require some legacy nuget packages from old CQL days. These projects are more or less abandoned, so we are including the compiled nuget packages directly in whatever projects need them, moving forward. Basically, I have omitted `nuget.cqlcorp.local` on the temp build server via the hosts file (this is while testing at CQL; you don't need to do this if you're working on a permanent Azure server), and then run the build, find out what `Cql*` packages it fails to find, then pull them down from within CQL's VPN so and put them in `legacy-cql-nuget-packages` folder in the root of the repository, and change/add the `nuget.cqlcorp.local` reference in the repo's root `NuGet.config` file to point to `./legacy-cql-nuget-packages` (under `/configuration/packageSoures`).
+Now you can set up the build runner in the Bitbucket admin!
 
 When you create a new Runner in Bitbucket, you get some copy/paste Powershell commands asking you to download the runner zip and another command for starting it up. Do all but the last command, and make sure the root of the build directory, unzipped, lives here:
 
@@ -94,7 +96,4 @@ nssm set WwwBitbucketPipelinesRunner AppRestartDelay 0
 nssm start WwwBitbucketPipelinesRunner
 
 ```
-
-Now you can set up the build runner in the Bitbucket admin. The lousy instructions are for testing in the current console. In reality, we'll eventually use NSSM to set it up as a server. _TODO: Chad to provide more info_
-
 
