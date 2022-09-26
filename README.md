@@ -51,6 +51,8 @@ choco install -y sql-server-2019
 choco install -y sql-server-management-studio
 ```
 
+NOTE: For PIM db tests to run, you need to install the MS Access Redistributable from [here](https://www.microsoft.com/en-us/download/confirmation.aspx?id=13255). I tried the choco version (made2010) but it did not work, so I did this with the old school installer and it worked.
+
 Please make sure you restart before installing a runner. Chocolatey mentions to run `refreshenv` but neglects to inform you it won't work as expected in Powershell.
 
 There are some old timey Visual Studio files we have to manually place on the server. See the
