@@ -45,6 +45,10 @@ choco install -y netfx-4.5.2-devpack
 choco install -y netfx-4.6.1-devpack
 choco install -y netfx-4.6.2-devpack
 choco install -y webdeploy
+
+# Optional sql server for WWW PIM Tests
+choco install -y sql-server-2019
+choco install -y sql-server-management-studio
 ```
 
 Please make sure you restart before installing a runner. Chocolatey mentions to run `refreshenv` but neglects to inform you it won't work as expected in Powershell.
@@ -58,12 +62,16 @@ C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Microsoft
 
 _NOTE: You will need to do the above for each version of msbuild you have on the server. Be mindful of the `v16.0` which changes per msbuild version!_
 
+There are some common build tools in the `common` folder. Put that in the `c:\build-runner\common` directory on the build server, and make sure you change to the correct password (find/replace PASSWORD). This is how dev deployments will be able to stop and start the job scheduler.
+
 It is best to make an alias for build/test tools with version intact, so let's maintain a file at `$PSHOME\profile.ps1` with the following contents (add more to this as needed):
 
 ```powershell
 # These aliases will be available to any job. Add more as needed.
 Set-Alias -Scope Global -Name msbuild2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\msbuild.exe"
 Set-Alias -Scope Global -Name vstest2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"
+
+$env:PATH = 'c:\build-runner\common;' + $env:PATH
 
 # Explicitly set the nuget package cache when running as LocalSystem account because sometimes it gets confused between 32 and 64 bit environments
 $env:NUGET_PACKAGES="C:\build-runner\nuget-package-cache"
