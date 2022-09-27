@@ -1,6 +1,6 @@
 @ECHO OFF
 REM Stops the CQL Scheduler on DEV IIS 7 if it is running.
-taskkill /s 172.100.8.10 /FI "IMAGENAME eq Cql.ProcessScheduler.exe" /u ".\cqladmin" /p "PASSWORD"
+taskkill /s 172.100.8.10 /FI "IMAGENAME eq Cql.ProcessScheduler.exe"
 
 REM sc \\172.100.8.10 stop CQLScheduler
 
@@ -15,8 +15,8 @@ IF ERRORLEVEL 1 GOTO :Error
 GOTO :Done
 
 :Done
-echo Pause for 15 seconds to give the scheduler time to actually shut down.
-ping 127.0.0.1 -n 16 > nul
+echo Pause for 16 seconds to give the scheduler time to actually shut down.
+ping -n 16 127.0.0.1 >NUL
 EXIT /B 0
 
 :NoControl

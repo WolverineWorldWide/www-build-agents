@@ -68,7 +68,7 @@ C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Microsoft
 
 _NOTE: You will need to do the above for each version of msbuild you have on the server. Be mindful of the `v16.0` which changes per msbuild version!_
 
-There are some common build tools in the `common` folder. Put that in the `c:\build-runner\common` directory on the build server, and make sure you change to the correct password (find/replace PASSWORD). This is how dev deployments will be able to stop and start the job scheduler.
+There are some common build tools in the `common` folder. Put that in the `c:\build-runner\common` directory on the build server. This is how dev deployments will be able to stop and start the job scheduler.
 
 It is best to make an alias for build/test tools with version intact, so let's maintain a file at `$PSHOME\profile.ps1` with the following contents (add more to this as needed):
 
