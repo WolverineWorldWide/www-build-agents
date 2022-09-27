@@ -70,6 +70,8 @@ _NOTE: You will need to do the above for each version of msbuild you have on the
 
 There are some common build tools in the `common` folder. Put that in the `c:\build-runner\common` directory on the build server. This is how dev deployments will be able to stop and start the job scheduler.
 
+############## WARNING: Check each file for password replacements. For some ridiculous reason, taskkill needs a password now and I ran out of time trying to do it the right way.
+
 It is best to make an alias for build/test tools with version intact, so let's maintain a file at `$PSHOME\profile.ps1` with the following contents (add more to this as needed):
 
 ```powershell
@@ -77,9 +79,36 @@ It is best to make an alias for build/test tools with version intact, so let's m
 Set-Alias -Scope Global -Name msbuild2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\msbuild.exe"
 Set-Alias -Scope Global -Name vstest2019 -Value "C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"
 
+# If you want any executables available for the build, put them in c:\build-runner\common
 $env:PATH = 'c:\build-runner\common;' + $env:PATH
 
-# Explicitly set the nuget package cache (originally because we first started running as LocalSystem account and sometimes it gets confused between 32 and 64 bit environments, and now just for nostalgia)
+function WaitFor-CQLSchedulerService([Parameter(Mandatory=$true)] $status) {
+    echo "Looking up CQLScheduler Service on UTIL01"
+
+    $svc=Get-Service -ComputerName dev-www-util01 -Name CQLScheduler
+
+    echo "Current status of service is $($svc.Status)"
+    if ($status -eq $svc.Status) {
+        echo "Service is in the desired state. Exiting."
+    } else {
+        echo "Setting status to $status"
+        $svc | Set-Service -Status $status
+
+        echo "Double-checking that status has officially been set to $status by calling svc.WaitForStatus(). This will time out and crash within a minute if the status never makes it to $status"
+        $svc.WaitForStatus($status, '00:01:00')
+        echo "Yay, we did it!"
+    }
+}
+
+function Stop-CQLSchedulerService() {
+    WaitFor-CQLSchedulerService Stopped
+}
+
+function Start-CQLSchedulerService() {
+    WaitFor-CQLSchedulerService Running
+}
+
+# Explicitly set the nuget package cache when running as LocalSystem account because sometimes it gets confused between 32 and 64 bit environments
 $env:NUGET_PACKAGES="C:\build-runner\nuget-package-cache"
 ```
 Now you can set up the build runner in the Bitbucket admin!
