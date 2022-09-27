@@ -35,6 +35,10 @@ git config --system core.longpaths true
 # Used to ease installation of build agent runner as Windows Service
 choco install -y nssm
 
+# Originally needed for psexec to assist with cross-machine service calls, but we have since not used psexec. We could
+# probably uninstall this but, meh, if it ain't broke.
+choco install -y sysinternals
+
 # Needed for WWW Builds
 choco install -y nvs
 choco install -y nuget.commandline
@@ -75,7 +79,7 @@ Set-Alias -Scope Global -Name vstest2019 -Value "C:\Program Files (x86)\Microsof
 
 $env:PATH = 'c:\build-runner\common;' + $env:PATH
 
-# Explicitly set the nuget package cache when running as LocalSystem account because sometimes it gets confused between 32 and 64 bit environments
+# Explicitly set the nuget package cache (originally because we first started running as LocalSystem account and sometimes it gets confused between 32 and 64 bit environments, and now just for nostalgia)
 $env:NUGET_PACKAGES="C:\build-runner\nuget-package-cache"
 ```
 Now you can set up the build runner in the Bitbucket admin!
@@ -95,7 +99,13 @@ cd C:\build-runner\atlassian-bitbucket-pipelines-runner\bin
 
 And now we can install that as a Windows Service and start it up.
 
+We want to run the service as a specific user that can toggle off/on the CQL Scheduler service remotely and copy files over the network. This is _not_ LocalSystem. Yes, the user was created with the name `jenkinsuser` and I thought it silly enough to keep it.
+
 ```powershell
+function Get-StringMaskedInput($msg) {
+    [Runtime.InteropServices.Marshal]::PtrToStringAuto(([Runtime.InteropServices.Marshal]::SecureStringToBSTR((Read-Host $msg -AsSecureString))))
+}
+
 nssm install WwwBitbucketPipelinesRunner (Get-Command powershell).Source
 nssm set WwwBitbucketPipelinesRunner AppParameters C:\build-runner\www-build-runner-entrypoint.ps1
 nssm set WwwBitbucketPipelinesRunner DisplayName "WWW Bitbucket Pipelines Runner"
@@ -103,7 +113,7 @@ nssm set WwwBitbucketPipelinesRunner Description "Windows runner for Bitbucket P
 nssm set WwwBitbucketPipelinesRunner Start SERVICE_DELAYED_AUTO_START
 nssm set WwwBitbucketPipelinesRunner AppExit Default Restart
 nssm set WwwBitbucketPipelinesRunner AppRestartDelay 0
+nssm set WwwBitbucketPipelinesRunner ObjectName .\jenkinsuser (Get-StringMaskedInput "Enter the password for jenkinsuser")
 nssm start WwwBitbucketPipelinesRunner
-
 ```
 
